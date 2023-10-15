@@ -1,0 +1,57 @@
+To create an Apache server in AWS CLI
+you need to create an EC2 instance first
+
+1-Create, diplay & delete key pairs
+
+2-Create and configure security groups
+
+3-Launch and list EC2 instances
+
+
+
+1-Create a key pair 
+aws ec2 create-key-pair --key-name MyKeyPair --query 'KeyMaterial' --output text > MyKeyPair.pem
+
+for PowerShell
+aws ec2 create-key-pair --key-name MyKeyPair --query 'KeyMaterial' --output text | out-file -encoding ascii -filepath MyKeyPair.pem
+
+2-Set permission of the private key file so you can read it 
+chmod 400 MyKeyPair.pem
+
+**You need to find the VPC ID before you start 
+aws ec2 describe-vpcs
+
+
+3-Create a security group
+aws ec2 create-security-group --group-name my-sg --description "My security group" --vpc-id vpc-1a2b3c4d
+
+**to view information about the security group
+aws ec2 describe-security-groups --group-ids sg-903004f8
+
+sg-090e7bcf92290c01a
+4-Add rule to your security group
+aws ec2 authorize-security-group-ingress --group-id <SecurityGroupID> --protocol tcp --port 22 --cidr 0.0.0.0/0
+aws ec2 authorize-security-group-ingress --group-id <SecurityGroupID> --protocol tcp --port 80 --cidr 0.0.0.0/0
+
+**To view changes use this command
+aws ec2 describe-security-groups --group-ids sg-903004f8
+
+5-You need an Amazon Machine Image - AMI ID 
+copy any AMI ID you want (Linux, Windows or macOS)
+ami-041feb57c611358bd
+
+6-Install Apache 
+vim apachescript.sh
+
+#!/bin/bash
+yum update -y 
+yum install httpd -y
+systemctl start httpd
+systemctl enable httpd
+
+enter ESC & :wq to save 
+
+7-Run your instance
+aws ec2 run-instances --image-id ami-041feb57c611358bd --count 1 --instance-type t2.micro --key-name MyKeyPair --security-group-ids sg-090e7bcf92290c01a --subnet-id subnet-0bc997ea7b86c1912 --user-data file://apachescript.sh
+
+8-Copy the public address of the instance from the console and paste it in the browser to check it!
